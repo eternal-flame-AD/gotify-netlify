@@ -1,6 +1,7 @@
 BUILDDIR=./build
 GOTIFY_VERSION=master
 PLUGIN_NAME=netlify
+LICENSE_DIR=./OPENSOURCELICENSE
 
 download-tools:
 	GO111MODULE=off go get -u github.com/gotify/plugin-api/cmd/gomod-cap
@@ -23,25 +24,17 @@ check-go-mod: create-build-dir
 	rm ${BUILDDIR}/gotify-server.mod || true
 
 build: create-build-dir update-go-mod
-	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-for-gotify-${GOTIFY_VERSION}.so -buildmode=plugin
-
-build-cross: create-build-dir update-go-mod
-	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-${GOOS}-${GOARCH}${GOARM}-for-gotify-${GOTIFY_VERSION}.so;
+	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-$$(go env -json | jq -r ".GOOS")-$$(go env -json | jq -r ".GOARCH")${GOARM}-for-gotify-${GOTIFY_VERSION}.so -buildmode=plugin
 
 extract-licenses:
 	go mod vendor
 	mkdir ${LICENSE_DIR} || true
 	for LICENSE in $(shell find vendor/* -name LICENSE); do \
 		DIR=`echo $$LICENSE | tr "/" _ | sed -e 's/vendor_//; s/_LICENSE//'` ; \
-        cp $$LICENSE ${LICENSE_DIR}$$DIR ; \
-    done
-
-package-zip: extract-licenses
-	for BUILD in $(shell find ${BUILD_DIR}*); do \
-       zip -j $$BUILD.zip $$BUILD ./LICENSE; \
-       zip -ur $$BUILD.zip ${LICENSE_DIR}; \
+        cp $$LICENSE ${LICENSE_DIR}/$$DIR ; \
 	done
+
 
 check: check-go check-go-mod
 
-.PHONY: build build-cross package-zip download-tools check-go check-go-mod update-go-mod
+.PHONY: build download-tools check-go check-go-mod update-go-mod
