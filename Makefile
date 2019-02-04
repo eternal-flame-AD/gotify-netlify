@@ -1,5 +1,5 @@
 BUILDDIR=./build
-GOTIFY_VERSION=master
+GOTIFY_VERSION=44f905d
 PLUGIN_NAME=netlify
 
 download-tools:
@@ -15,6 +15,7 @@ update-go-mod: create-build-dir
 	wget -LO ${BUILDDIR}/gotify-server.mod https://raw.githubusercontent.com/gotify/server/${GOTIFY_VERSION}/go.mod
 	gomod-cap -from ${BUILDDIR}/gotify-server.mod -to go.mod
 	rm ${BUILDDIR}/gotify-server.mod || true
+	go mod tidy
 
 check-go-mod: create-build-dir
 	wget -LO ${BUILDDIR}/gotify-server.mod https://raw.githubusercontent.com/gotify/server/${GOTIFY_VERSION}/go.mod
