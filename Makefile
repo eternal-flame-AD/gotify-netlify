@@ -1,5 +1,5 @@
 BUILDDIR=./build
-GOTIFY_VERSION=44f905d
+GOTIFY_VERSION=master
 PLUGIN_NAME=netlify
 
 download-tools:
@@ -22,13 +22,14 @@ check-go-mod: create-build-dir
 	gomod-cap -from ${BUILDDIR}/gotify-server.mod -to go.mod -check=true
 	rm ${BUILDDIR}/gotify-server.mod || true
 
-build: create-build-dir
-	go build -o build/${PLUGIN_NAME}.so -buildmode=plugin
+build: create-build-dir update-go-mod
+	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-for-gotify-${GOTIFY_VERSION}.so -buildmode=plugin
 
-build-cross: create-build-dir
-	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-${GOOS}-${GOARCH}${GOARM}.so;
+build-cross: create-build-dir update-go-mod
+	CGO_ENABLED=1 go build -o build/${PLUGIN_NAME}-${GOOS}-${GOARCH}${GOARM}-for-gotify-${GOTIFY_VERSION}.so;
 
 extract-licenses:
+	go mod vendor
 	mkdir ${LICENSE_DIR} || true
 	for LICENSE in $(shell find vendor/* -name LICENSE); do \
 		DIR=`echo $$LICENSE | tr "/" _ | sed -e 's/vendor_//; s/_LICENSE//'` ; \
