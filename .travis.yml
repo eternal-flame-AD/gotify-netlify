@@ -1,0 +1,46 @@
+sudo: required
+language: go
+go:
+  - "1.11.5"
+
+addons:
+  apt:
+    packages:
+     - mingw-w64
+     - gcc-aarch64-linux-gnu
+     - g++-aarch64-linux-gnu
+     - gcc-arm-linux-gnueabihf
+     - g++-arm-linux-gnueabihf
+
+notifications:
+  email: false
+
+env:
+  - GO111MODULE=on
+
+before_install:
+  - make download-tools
+  - go get
+
+script:
+  - make check
+
+before_deploy:
+  - >
+    if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+      export BEFORE_DEPLOY_RUN=1;
+                                                             CGO_ENABLED=1 GOOS=linux   GOARCH=amd64       make build-cross;
+      CC=aarch64-linux-gnu-gcc   CXX=aarch64-linux-gnu-g++   CGO_ENABLED=1 GOOS=linux   GOARCH=arm64       make build-cross;
+      CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ CGO_ENABLED=1 GOOS=linux   GOARCH=arm GOARM=7 make build-cross;
+      make package-zip;
+      ls -lath build;
+    fi
+
+deploy:
+  - provider: releases
+    api_key: $GH_TOKEN
+    file_glob: true
+    file: build/*.so
+    skip_cleanup: true
+    on:
+      tags: true
